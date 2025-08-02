@@ -1,78 +1,63 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
-public class WindManager : MonoBehaviour
+public class WindManager : PirateSingleton<WindManager>
 {
-    public float maxWindStrength = 5f; // Cường độ gió tối đa
-    public float minWindStrength = 1f; // Cường độ gió tối thiểu
-    public float windChangeInterval = 5f; // Thời gian thay đổi hướng gió (giây)
-    public float rotationSpeed = 1f; // Tốc độ quay của hướng gió khi thay đổi
+    [Header("Wind Settings")]
+    public float windStrength = 700f;
+    public float windChangeInterval = 10f;
 
-    private Vector3 currentWindDirection;
-    public Vector3 CurrentWindDirection => currentWindDirection; // Thuộc tính để lấy hướng gió hiện tại
-    private float currentWindStrength;
-    private Coroutine windChangeCoroutine;
+    public Vector3 currentWindForce;
+    private float windTimer;
 
-    public static WindManager Instance { get; private set; } // Singleton pattern
+    private List<IWindAffectAble> windAffectAbleObjects = new List<IWindAffectAble>();
+    
 
-    void Awake()
+    protected override void Start()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // Giữ WindManager tồn tại qua các scene
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        windTimer = windChangeInterval;
+        GenerateNewWindForce();
     }
 
-    void Start()
+    void Update()
     {
-        currentWindDirection = Random.onUnitSphere; // Hướng gió ban đầu ngẫu nhiên
-        currentWindStrength = Random.Range(minWindStrength, maxWindStrength); // Cường độ gió ban đầu ngẫu nhiên
-        windChangeCoroutine = StartCoroutine(ChangeWindRoutine());
-    }
-
-    IEnumerator ChangeWindRoutine()
-    {
-        while (true)
+        windTimer -= Time.deltaTime;
+        if (windTimer <= 0)
         {
-            yield return new WaitForSeconds(windChangeInterval);
-
-            // Chọn hướng gió mới ngẫu nhiên
-            Vector3 targetWindDirection = Random.onUnitSphere;
-            float targetWindStrength = Random.Range(minWindStrength, maxWindStrength);
-
-            // Làm mượt quá trình chuyển đổi hướng gió
-            float elapsedTime = 0f;
-            Vector3 startWindDirection = currentWindDirection;
-            float startWindStrength = currentWindStrength;
-
-            while (elapsedTime < rotationSpeed)
-            {
-                currentWindDirection = Vector3.Slerp(startWindDirection, targetWindDirection, elapsedTime / rotationSpeed);
-                currentWindStrength = Mathf.Lerp(startWindStrength, targetWindStrength, elapsedTime / rotationSpeed);
-                elapsedTime += Time.deltaTime;
-                yield return null;
-            }
-
-            currentWindDirection = targetWindDirection;
-            currentWindStrength = targetWindStrength;
+            GenerateNewWindForce();
+            windTimer = windChangeInterval;
         }
     }
 
-    public Vector3 GetWindForce(float mass)
+    void FixedUpdate()
     {
-        // Lực gió tác dụng lên object = hướng gió * cường độ gió * khối lượng (để đảm bảo object nhẹ hơn bị đẩy nhiều hơn)
-        return currentWindDirection.normalized * currentWindStrength * mass;
+        foreach (IWindAffectAble obj in windAffectAbleObjects)
+        {
+            obj.ApplyWindForce(currentWindForce);
+        }
     }
 
-    // Để hiển thị hướng gió trong Scene view (chỉ dùng cho debug)
-    void OnDrawGizmos()
+    void GenerateNewWindForce()
     {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawRay(transform.position, currentWindDirection.normalized * currentWindStrength * 2);
+        Vector3 randomDirection = new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)).normalized;
+        currentWindForce = randomDirection * windStrength;
+
+        Debug.Log("Hướng gió mới: " + currentWindForce);
+    }
+
+    public void Register(IWindAffectAble obj)
+    {
+        if (!windAffectAbleObjects.Contains(obj))
+        {
+            windAffectAbleObjects.Add(obj);
+        }
+    }
+
+    public void Unregister(IWindAffectAble obj)
+    {
+        if (windAffectAbleObjects.Contains(obj))
+        {
+            windAffectAbleObjects.Remove(obj);
+        }
     }
 }
