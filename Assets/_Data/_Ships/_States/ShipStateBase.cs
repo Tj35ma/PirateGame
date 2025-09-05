@@ -2,9 +2,9 @@ using UnityEngine;
 
 public abstract class ShipStateBase
 {
-    protected ShipController controller;
+    protected PlayerMovement controller;
 
-    public ShipStateBase(ShipController controller)
+    public ShipStateBase(PlayerMovement controller)
     {
         this.controller = controller;
     }

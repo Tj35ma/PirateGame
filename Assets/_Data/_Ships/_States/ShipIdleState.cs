@@ -2,7 +2,7 @@
 
 public class ShipIdleState : ShipStateBase
 {
-    public ShipIdleState(ShipController controller) : base(controller) { }
+    public ShipIdleState(PlayerMovement controller) : base(controller) { }
 
     public override void Enter()
     {

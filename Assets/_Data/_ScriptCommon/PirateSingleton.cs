@@ -11,11 +11,14 @@ public class PirateSingleton<T> : PirateMonoBehaviour where T : PirateMonoBehavi
         {
             if (isShuttingDown)
             {
-                Debug.LogWarning("[Singleton] Instance already destroyed on application quit. Won't create again - returning null.");
+                //Debug.LogWarning("[Singleton] Instance already destroyed on application quit. Returning null.");
                 return null;
             }
 
-            if (_instance == null) Debug.LogError("Singleton instance has not been created yet!");
+            if (_instance == null)
+            {
+                Debug.LogError($"[Singleton] Instance of {typeof(T)} has not been created yet!");
+            }
             return _instance;
         }
     }
@@ -23,7 +26,7 @@ public class PirateSingleton<T> : PirateMonoBehaviour where T : PirateMonoBehavi
     protected override void Awake()
     {
         base.Awake();
-        this.LoadInstance();
+        LoadInstance();
     }
 
     protected virtual void LoadInstance()
@@ -31,11 +34,15 @@ public class PirateSingleton<T> : PirateMonoBehaviour where T : PirateMonoBehavi
         if (_instance == null)
         {
             _instance = this as T;
-            if (transform.parent == null) DontDestroyOnLoad(gameObject);
-            return;
+            
+            if (transform.parent == null)
+                DontDestroyOnLoad(gameObject);
         }
-
-        if (_instance != this) Debug.LogError("Another instance of SingletonExample already exists!");
+        else if (_instance != this)
+        {
+            Debug.LogError($"[Singleton] Another instance of {typeof(T)} already exists! Destroying this one.");
+            Destroy(gameObject);
+        }
     }
 
     private void OnApplicationQuit()
@@ -45,6 +52,9 @@ public class PirateSingleton<T> : PirateMonoBehaviour where T : PirateMonoBehavi
 
     private void OnDestroy()
     {
-        isShuttingDown = true;
+        if (_instance == this)
+        {
+            _instance = null;
+        }
     }
 }

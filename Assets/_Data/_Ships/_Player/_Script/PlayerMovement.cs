@@ -1,60 +1,49 @@
 ﻿using UnityEngine;
+using UnityEngine.Playables;
 
 public class PlayerMovement : PirateMonoBehaviour, IWindAffectAble
 {
-    [Header("Ship Movement Settings")]
-    public float forwardThrust = 3500f;
-    public float steeringTorque = 200f;
-    public float maxSpeed = 100f;
+    [SerializeField] protected float moveForce = 0f;
+    [SerializeField] protected float turnForce = 0.2f;
+    [SerializeField] protected float playerSpeed = 0f;
+    [SerializeField] protected float maxSpeed = 10f;
 
-    [Header("Physics Dampening")]
-    public float linearDamping = 0.5f;
-    public float angularDamping = 0.9f;
+    [Header("Combat Settings")]
+    public GameObject cannonballPrefab;
+    public Transform firePoint;
+    [SerializeField] protected float cannonballSpeed = 20f;
 
-    private Rigidbody rigidPlayer;
-    private PlayerState currentState;
+    [SerializeField] protected float fireCooldown = 1.5f;
+    protected float lastFireTime = -999f;
+    public float LastFireTime => lastFireTime;
 
-    protected override void LoadComponents()
-    {
-        base.LoadComponents();
-        this.LoadRigidbody();
-    }
-
-    protected virtual void LoadRigidbody()
-    {
-        if (this.rigidPlayer != null) return;
-        this.rigidPlayer = GetComponentInParent<Rigidbody>();
-        Debug.Log(transform.name + " LoadRigidbody: ", gameObject);
-    }
-
-    private enum PlayerState
-    {
-        Idle,
-        Moving
-    }
+    protected Rigidbody rb;
+    protected ShipStateBase currentState;
+    protected Vector2 moveInput;    
 
     protected override void Start()
     {
-        base.Start();
-        currentState = PlayerState.Idle;
+        this.moveForce = this.rb.mass * 50;
+        ChangeState(new ShipIdleState(this));
     }
 
-    void FixedUpdate()
+    private void Update()
     {
-        float verticalInput = InputManager.Instance.MovementInput;
+        this.playerSpeed = (int)this.rb.linearVelocity.magnitude;
 
-        switch (currentState)
+        moveInput = new Vector2(InputManager.Instance.TurnInput, InputManager.Instance.MovementInput);
+
+        if (InputManager.Instance.IsAttacking())
         {
-            case PlayerState.Idle:
-                HandleIdleState(verticalInput);
-                break;
-            case PlayerState.Moving:
-                HandleMovingState(verticalInput);
-                break;
+            FireCannon();
+            
+            if (!(currentState is ShipCombatState))
+            {
+                ChangeState(new ShipCombatState(this));
+            }
         }
 
-        ApplyDamping();
-        ClampMaxSpeed();
+        currentState?.Update();
     }
 
     protected override void OnEnable()
@@ -73,55 +62,74 @@ public class PlayerMovement : PirateMonoBehaviour, IWindAffectAble
         }
     }
 
-    private void HandleIdleState(float verticalInput)
+    protected override void LoadComponents()
     {
-        if (Mathf.Abs(verticalInput) > 0.01f)
-        {
-            currentState = PlayerState.Moving;
-        }
+        base.LoadComponents();
+        this.LoadRigidbody();
     }
 
-    private void HandleMovingState(float verticalInput)
+    protected virtual void LoadRigidbody()
     {
-        if (Mathf.Abs(verticalInput) < 0.01f)
-        {
-            currentState = PlayerState.Idle;
-            return;
-        }
-
-        Vector3 thrustForce = transform.forward * verticalInput * forwardThrust;
-        rigidPlayer.AddForce(thrustForce, ForceMode.Force);
-
-        float horizontalInput = InputManager.Instance.TurnInput;
-        float torqueAmount = horizontalInput * steeringTorque;
-
-        if (verticalInput < 0)
-        {
-            torqueAmount *= -1f;
-        }
-
-        rigidPlayer.AddTorque(0f, torqueAmount, 0f, ForceMode.Force);
+        if (this.rb != null) return;
+        this.rb = GetComponentInParent<Rigidbody>();
+        Debug.Log(transform.name + " LoadRigidbody: ", gameObject);
     }
 
-    private void ClampMaxSpeed()
+    public void ChangeState(ShipStateBase newState)
     {
-        if (rigidPlayer.linearVelocity.magnitude > maxSpeed)
-        {
-            rigidPlayer.linearVelocity = rigidPlayer.linearVelocity.normalized * maxSpeed;
-        }
+        currentState?.Exit();
+        currentState = newState;
+        currentState?.Enter();
     }
 
-    private void ApplyDamping()
+    public bool HasMovementInput()
     {
-        rigidPlayer.linearVelocity *= linearDamping;
-        rigidPlayer.angularVelocity *= angularDamping;
+        return moveInput.y != 0f;
     }
+
+    public void HandleMovement()
+    {
+
+
+        Vector3 thrustForce = transform.forward * moveInput.y * moveForce;
+        rb.AddForce(thrustForce, ForceMode.Force);
+
+        float turnAmount = moveInput.x * turnForce;
+        if (moveInput.y < 0f) turnAmount = -turnAmount;
+        Quaternion turnRotation = Quaternion.Euler(0f, turnAmount, 0f);
+        if (moveInput.y != 0f) rb.MoveRotation(rb.rotation * turnRotation);
+
+        if (rb.linearVelocity.magnitude > maxSpeed)
+        {
+            rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
+        }
+    }
+    
 
     public void ApplyWindForce(Vector3 windForce)
     {
-        if (currentState == PlayerState.Moving)
+        if (currentState is ShipMoveState && WindManager.Instance != null)
         {
-            rigidPlayer.AddForce(windForce, ForceMode.Force);
+            rb.AddForce(windForce, ForceMode.Force);
         }
+    }
+
+
+    public void FireCannon()
+    {
+        if (Time.time < lastFireTime + fireCooldown)
+            return;
+
+        if (cannonballPrefab != null && firePoint != null)
+        {
+            GameObject cannonball = Instantiate(cannonballPrefab, firePoint.position, firePoint.rotation);
+            Rigidbody cbRb = cannonball.GetComponent<Rigidbody>();
+            if (cbRb != null)
+            {
+                cbRb.linearVelocity = firePoint.forward * cannonballSpeed;
+            }
+        }
+
+        lastFireTime = Time.time;
     }
 }
