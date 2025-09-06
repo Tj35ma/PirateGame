@@ -118149,6 +118149,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 476920, guid: a2fdfebba1c706e41b0fa8a819b914e9, type: 3}
   m_PrefabInstance: {fileID: 956880424}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &956891556
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 956891557}
+  m_Layer: 0
+  m_Name: PlayerCombat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &956891557
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956891556}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1128114575769020462}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &957341743 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 444698, guid: a1f656c69d2080948aa8bcd6456962b9, type: 3}
@@ -267659,6 +267690,7 @@ Transform:
   m_Children:
   - {fileID: 9207268058267251622}
   - {fileID: 8187493945627047777}
+  - {fileID: 956891557}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1249284318510148303
@@ -268150,7 +268182,7 @@ Transform:
   m_GameObject: {fileID: 4304174044122618874}
   serializedVersion: 2
   m_LocalRotation: {x: -0.32097435, y: 0.29876506, z: -0.10747064, w: -0.89228076}
-  m_LocalPosition: {x: 59.8356, y: 13.109398, z: -16.845963}
+  m_LocalPosition: {x: 130, y: 109.4, z: -109.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -268238,7 +268270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rigidPlayer: {fileID: 4916355830887941818}
-  playerMovement: {fileID: 0}
+  playerMovement: {fileID: 8187493945627047778}
 --- !u!54 &4916355830887941818
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -268264,7 +268296,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 4
+  m_Constraints: 84
   m_CollisionDetection: 0
 --- !u!114 &5646169583651298592
 MonoBehaviour:
@@ -268393,11 +268425,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 7106278882017076147}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8878459e1829d144c93765a27a84bdc1, type: 3}
+  m_Script: {fileID: 11500000, guid: 27362d2fa76df7b4fb457783534bb626, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   moveForce: 0
-  turnForce: 50
+  turnForce: 0.2
+  playerSpeed: 0
   maxSpeed: 10
   cannonballPrefab: {fileID: 0}
   firePoint: {fileID: 0}
